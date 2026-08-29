@@ -2,7 +2,7 @@
 
 > Aplicativo desktop (Electron + React + Three.js) para importar múltiplas animações FBX/GLB, retargetá-las sobre uma malha base e exportar um único `.glb` combinado pronto para Godot, Unity ou Three.js.
 
-![Mixamo GLB Combiner](./build/icon.png)
+![Mixamo GLB Combiner](./build/MixamoGLB Combiner.jpg)
 
 ---
 
