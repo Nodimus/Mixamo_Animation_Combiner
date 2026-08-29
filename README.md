@@ -42,7 +42,7 @@
 
 | Ferramenta | Versão  | Obrigatório para                    |
 | ---------- | ------- | ----------------------------------- |
-| Node.js    | ≥ 20.x  | Build e dev em todas as plataformas |
+| Node.js    | ≥ 22.x  | Build e dev em todas as plataformas |
 | npm        | ≥ 10.x  | Idem                                |
 | Git        | qualquer| Versionamento (release script)      |
 | Wine       | latest  | Build de Windows `.exe` no Linux    |

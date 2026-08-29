@@ -8,7 +8,10 @@
     "name": "Josevaldo",
     "email": "dev@gamelande.local"
   },
-  "homepage": "https://github.com/gamelande/Mixamo-GLB-Combiner#readme",
+  "homepage": "https://github.com/Nodimus/Mixamo_Animation_Combiner#readme",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "license": "MIT",
   "scripts": {
     "dev": "electron-vite dev",
