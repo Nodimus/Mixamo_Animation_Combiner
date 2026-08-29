@@ -2,7 +2,7 @@
 
 > Aplicativo desktop (Electron + React + Three.js) para importar múltiplas animações FBX/GLB, retargetá-las sobre uma malha base e exportar um único `.glb` combinado pronto para Godot, Unity ou Three.js.
 
-MixamoGLBCombiner.jpg
+![Mixamo GLB Combiner](./Mixamo_GLB_Combiner.jpg)
 
 ---
 
@@ -23,6 +23,8 @@ MixamoGLBCombiner.jpg
 - [Estrutura de Saída](#estrutura-de-saída)
 - [Workflow de Release Local](#workflow-de-release-local)
 - [Solução de Problemas](#solução-de-problemas)
+- [☕ Apoie o Projeto](#-apoie-o-projeto)
+- [👤 Autor](#-autor)
 
 ---
 
@@ -322,6 +324,24 @@ O `package.json` está configurado com `identity: null` e `gatekeeperAssess: fal
 
 ---
 
+## ☕ Apoie o Projeto
+
+Se esta ferramenta foi útil para você ou seus projetos de jogos, considere apoiar o desenvolvimento com um cafezinho!
+
+[![Pague-me um café](https://img.shields.io/badge/Pix-Pague--me%20um%20cafezinho%20☕-brightgreen?style=for-the-badge&logo=pix)](https://mpago.li/12UpbGg)
+
+👉 **Link direto para contribuição via Pix / Mercado Pago:** [https://mpago.li/12UpbGg](https://mpago.li/12UpbGg)
+
+---
+
+## 👤 Autor
+
+Desenvolvido por **Josevaldo Bastos (Nodimus)**:
+- 🌐 [josevaldo.com.br](https://josevaldo.com.br)
+- 🌐 [nodimus.com.br](https://nodimus.com.br)
+
+---
+
 ## Licença
 
-MIT © GameLande Tools
+MIT © [Josevaldo Bastos](https://josevaldo.com.br)
