@@ -17,7 +17,6 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "typecheck": "tsc --noEmit -p tsconfig.web.json && tsc --noEmit -p tsconfig.node.json",
-    "postinstall": "electron-builder install-app-deps",
     "icons": "powershell -ExecutionPolicy Bypass -File scripts/generate-icons.ps1",
     "prestage:wincode": "node scripts/prestage-wincode.cjs",
     "edit:exe": "node scripts/edit-exe.cjs",
