@@ -1,0 +1,201 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versão a publicar (ex: 1.2.0). Deixe vazio para usar a tag atual.'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Show environment info
+        shell: bash
+        run: |
+          echo "OS: $RUNNER_OS"
+          echo "Node: $(node -v)"
+          echo "npm:  $(npm -v)"
+
+      - name: Install Linux packaging deps (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libarchive-tools \
+            rpm \
+            fakeroot \
+            dpkg
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check (renderer)
+        run: npx tsc --noEmit -p tsconfig.web.json
+
+      - name: Compile (electron-vite)
+        run: npm run build
+
+      - name: Build Windows artifacts
+        if: runner.os == 'Windows'
+        shell: bash
+        run: npm run dist:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build macOS artifacts
+        if: runner.os == 'macOS'
+        run: npm run dist:mac
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Linux artifacts
+        if: runner.os == 'Linux'
+        run: npm run dist:linux
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: List generated artifacts
+        shell: bash
+        run: |
+          echo "---- dist/ contents ----"
+          ls -lhR dist/ || true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ runner.os }}
+          path: |
+            dist/*.exe
+            dist/*.exe.blockmap
+            dist/*.zip
+            dist/*.dmg
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.rpm
+            dist/latest*.yml
+          if-no-files-found: warn
+          retention-days: 14
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Read version from tag
+        id: version
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          echo "version=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: ${TAG}"
+
+      - name: Bump package.json to tag version
+        shell: bash
+        run: node scripts/release.js "${{ steps.version.outputs.version }}"
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Show downloaded artifacts
+        shell: bash
+        run: |
+          echo "---- artifacts/ contents ----"
+          ls -lhR artifacts/
+
+      - name: Flatten artifacts
+        shell: bash
+        run: |
+          mkdir -p release
+          find artifacts -type f \( \
+            -name "*.exe" -o -name "*.zip" -o -name "*.dmg" \
+            -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" \
+            \) -exec cp -v {} release/ \;
+          echo "---- release/ contents ----"
+          ls -lh release/
+
+      - name: Generate checksums
+        shell: bash
+        working-directory: release
+        run: |
+          sha256sum * > SHA256SUMS.txt
+          echo "---- SHA256SUMS.txt ----"
+          cat SHA256SUMS.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Mixamo GLB Combiner ${{ steps.version.outputs.version }}"
+          tag_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true
+          body: |
+            ## Mixamo GLB Combiner ${{ steps.version.outputs.version }}
+
+            Instaladores compilados a partir do commit `${{ github.sha }}`.
+
+            ### Downloads
+
+            | Plataforma | Arquivo |
+            |------------|---------|
+            | **Windows** (x64)      | `Mixamo GLB Combiner-Setup-${{ steps.version.outputs.version }}.exe` (instalador NSIS) |
+            | **Windows** (portable) | `Mixamo GLB Combiner-${{ steps.version.outputs.version }}-x64.zip` |
+            | **macOS**   (Intel)    | `Mixamo GLB Combiner-${{ steps.version.outputs.version }}-x64.dmg` |
+            | **macOS**   (Apple Silicon) | `Mixamo GLB Combiner-${{ steps.version.outputs.version }}-arm64.dmg` |
+            | **Linux**   (universal) | `Mixamo GLB Combiner-${{ steps.version.outputs.version }}-x64.AppImage` |
+            | **Linux**   (Debian/Ubuntu) | `mixamo-glb-combiner_${{ steps.version.outputs.version }}_amd64.deb` |
+            | **Linux**   (Fedora/RHEL) | `mixamo-glb-combiner-${{ steps.version.outputs.version }}.x86_64.rpm` |
+
+            Os hashes SHA-256 de todos os arquivos estão em `SHA256SUMS.txt`.
+          files: |
+            release/*
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Mark release as latest
+        if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-')
+        shell: bash
+        run: |
+          echo "Tag ${GITHUB_REF_NAME} publicada. Use 'gh release edit ${GITHUB_REF_NAME} --latest' se necessário."

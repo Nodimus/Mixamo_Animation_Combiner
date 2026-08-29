@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Validate (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check (renderer)
+        if: runner.os != 'Windows' || matrix.os == 'windows-latest'
+        run: npx tsc --noEmit -p tsconfig.web.json
+
+      - name: Type-check (main + preload)
+        run: npx tsc --noEmit -p tsconfig.node.json
+
+      - name: Compile (electron-vite)
+        run: npm run build
+
+      - name: Smoke-test Windows packaging
+        if: runner.os == 'Windows'
+        run: npm run dist:win
+
+      - name: Smoke-test macOS packaging
+        if: runner.os == 'macOS'
+        run: npm run dist:mac
+
+      - name: Smoke-test Linux packaging
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libarchive-tools rpm fakeroot dpkg
+          npm run dist:linux
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ runner.os }}-ci
+          path: |
+            dist/*.exe
+            dist/*.zip
+            dist/*.dmg
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.rpm
+          if-no-files-found: warn
+          retention-days: 7
