@@ -177,10 +177,12 @@ Dois workflows em `.github/workflows/` cuidam da pipeline automaticamente:
 O que ele faz:
 
 1. Faz checkout do código na tag correspondente.
-2. Roda `npm ci`, type-check, `npm run build` em **3 runners paralelos** (`windows-latest`, `macos-latest`, `ubuntu-latest`).
-3. Em cada runner, executa o script de empacotamento nativo da plataforma (`npm run dist:win/mac/linux`).
+2. Roda `npm ci`, type-check, `npm run build` em **2 runners paralelos** (`windows-latest`, `ubuntu-latest`).
+3. Em cada runner, executa o script de empacotamento nativo da plataforma (`npm run dist:win` ou `npm run dist:linux`).
 4. Faz upload dos instaladores como artifacts nomeados `dist-<OS>` (retenção: 14 dias).
 5. Job `release` (depende de `build`) baixa todos os artifacts, gera `SHA256SUMS.txt` e cria uma **GitHub Release** com notas geradas automaticamente, marcando `prerelease: true` quando a tag contém `-` (ex: `v1.2.0-beta.1`).
+
+> 📦 **macOS** foi removido do CI automatizado — os instaladores `.dmg` continuam disponíveis via `npm run dist:mac` rodando localmente em uma máquina Mac (configuração em `package.json` preservada).
 
 **Como usar:**
 
@@ -214,7 +216,7 @@ Roda em paralelo nos 3 sistemas operacionais:
 - `npm run dist:<os>` (gera instalador para o runner atual como smoke-test)
 - Upload do instalador como artifact (`dist-<OS>-ci`, retenção 7 dias)
 
-Use como gate de merge: **Settings → Branches → Branch protection rules → Require status checks → CI / Validate (windows-latest, macos-latest, ubuntu-latest)**.
+Use como gate de merge: **Settings → Branches → Branch protection rules → Require status checks → CI / Validate (windows-latest, ubuntu-latest)**.
 
 ---
 

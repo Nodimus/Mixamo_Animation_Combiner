@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [windows-latest, ubuntu-latest]
 
     steps:
       - name: Checkout
@@ -67,12 +67,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build macOS artifacts
-        if: runner.os == 'macOS'
-        run: npm run dist:mac
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Build Linux artifacts
         if: runner.os == 'Linux'
         run: npm run dist:linux
@@ -93,7 +87,6 @@ jobs:
             dist/*.exe
             dist/*.exe.blockmap
             dist/*.zip
-            dist/*.dmg
             dist/*.AppImage
             dist/*.deb
             dist/*.rpm
@@ -148,7 +141,7 @@ jobs:
         run: |
           mkdir -p release
           find artifacts -type f \( \
-            -name "*.exe" -o -name "*.zip" -o -name "*.dmg" \
+            -name "*.exe" -o -name "*.zip" \
             -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" \
             \) -exec cp -v {} release/ \;
           echo "---- release/ contents ----"
@@ -181,8 +174,6 @@ jobs:
             |------------|---------|
             | **Windows** (x64)      | `Mixamo GLB Combiner-Setup-${{ steps.version.outputs.version }}.exe` (instalador NSIS) |
             | **Windows** (portable) | `Mixamo GLB Combiner-${{ steps.version.outputs.version }}-x64.zip` |
-            | **macOS**   (Intel)    | `Mixamo GLB Combiner-${{ steps.version.outputs.version }}-x64.dmg` |
-            | **macOS**   (Apple Silicon) | `Mixamo GLB Combiner-${{ steps.version.outputs.version }}-arm64.dmg` |
             | **Linux**   (universal) | `Mixamo GLB Combiner-${{ steps.version.outputs.version }}-x64.AppImage` |
             | **Linux**   (Debian/Ubuntu) | `mixamo-glb-combiner_${{ steps.version.outputs.version }}_amd64.deb` |
             | **Linux**   (Fedora/RHEL) | `mixamo-glb-combiner-${{ steps.version.outputs.version }}.x86_64.rpm` |
